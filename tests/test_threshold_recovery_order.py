@@ -111,7 +111,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         ro = ThresholdRecoveryOrder("ADA/ETH", "ADA", 1000, "ETH", 0.32485131, -0.02)
 
         # update 1 - partial fill
-        resp = {"status":"open", "filled": 500, "cost": 0.32485131/2}
+        resp = {"status": "open", "filled": 500, "cost": 0.32485131/2}
         ro.update_from_exchange(resp)
         self.assertEqual(ro.filled_start_amount, 500)
         self.assertEqual(ro.filled, 500)
@@ -142,6 +142,27 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
 
         self.assertEqual("cancel tickers ADA/ETH", ro.order_command)
         self.assertIn("#below_threshold", ro.tags)
+
+        # positive difference
+        ro = ThresholdRecoveryOrder("ADA/ETH", "ETH", 0.32485131, "ADA", 1000, -0.02)
+
+        # update 1 - partial fill
+        resp = {"status": "open", "filled": 500, "cost": 0.32485131 / 2}
+        ro.update_from_exchange(resp)
+        self.assertEqual(ro.filled_start_amount, 0.32485131 / 2)
+        self.assertEqual(ro.filled, 500)
+        self.assertEqual(ro.status, "open")
+        self.assertEqual(ro.state, "best_amount")
+        self.assertEqual(ro.order_command, "hold tickers ADA/ETH")
+
+        market_data = [{"ask": 0.00032485131 * (1 - 0.021)}]
+        ro.update_from_exchange(resp, market_data)
+
+        self.assertEqual("hold tickers ADA/ETH", ro.order_command)
+        self.assertNotIn("#below_threshold", ro.tags)
+
+
+
 
     def test_fill_market_price_from_1st_order(self):
 
