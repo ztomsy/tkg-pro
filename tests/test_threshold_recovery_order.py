@@ -68,7 +68,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(ro.filled_price, ro.active_trade_order.price)
 
         # update with marker_data
-        market_data = {"ADA/ETH": {"ask": 0.00032487, "bid": 0.00032483}}
+        market_data = [{"ask": 0.00032487, "bid": 0.00032483}]
 
         ro.update_from_exchange(resp, market_data)
 
@@ -119,7 +119,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(ro.state, "best_amount")
         self.assertEqual(ro.order_command, "hold tickers ADA/ETH")
 
-        market_data = {"ADA/ETH": {"bid": 0.00032485131*(1-0.021)}}
+        market_data = [{"bid": 0.00032485131*(1-0.021)}]
         ro.update_from_exchange(resp, market_data)
 
         self.assertEqual("cancel tickers ADA/ETH", ro.order_command)
@@ -137,7 +137,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(ro.state, "best_amount")
         self.assertEqual(ro.order_command, "hold tickers ADA/ETH")
 
-        market_data = {"ADA/ETH": {"ask": 0.00032485131 * (1 + 0.021)}}
+        market_data = [{"ask": 0.00032485131 * (1 + 0.021)}]
         ro.update_from_exchange(resp, market_data)
 
         self.assertEqual("cancel tickers ADA/ETH", ro.order_command)
@@ -151,7 +151,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         # price above threshold
         for i in range(1, ro.max_best_amount_orders_updates):
             resp = {"status": "open", "filled": 500, "cost": 0.32485131/2}
-            ro.update_from_exchange(resp, {"ADA/ETH": {"ask": 1, "bid": ro.best_price*(1-0.009)}})
+            ro.update_from_exchange(resp, [ {"ask": 1, "bid": ro.best_price*(1-0.009)}])
 
             self.assertEqual(ro.filled_start_amount, 500)
             self.assertEqual(ro.filled, 500)

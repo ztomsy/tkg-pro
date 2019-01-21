@@ -128,7 +128,7 @@ class ThresholdRecoveryOrder(RecoveryOrder):
             try:
 
                 current_taker_price = core.get_symbol_order_price_from_tickers(self.start_currency, self.dest_currency,
-                                                                               market_data)["price"]
+                                                                               {self.symbol: market_data[0]})["price"]
                 if current_taker_price > 0:
                     price_diff = core.relative_target_price_difference(self.side, self.best_price, current_taker_price)
                     self._prev_price_diff = price_diff
