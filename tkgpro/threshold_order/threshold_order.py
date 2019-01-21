@@ -1,3 +1,4 @@
+import tkgcore
 from tkgcore import core
 from tkgcore import errors
 from tkgcore import TradeOrder
