@@ -1,6 +1,8 @@
 from .context import *
 import tkgpro
 from tkgpro import ThresholdRecoveryOrder
+from tkgcore import ActionOrderManager, ccxtExchangeWrapper
+
 import unittest
 import copy
 
@@ -201,7 +203,6 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(ro.order_command, "")
         self.assertEqual(2, len(ro.orders_history))
 
-
     def test_fill_market_price_6_orders(self):
 
         ro = ThresholdRecoveryOrder("ADA/ETH", "ADA", 1000, "ETH", 0.32485131)
@@ -241,8 +242,37 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
 
         self.assertEqual(6, len(ro.orders_history))
 
-    def test_1st_order_executed_better(self):
-        pass
+    def test_close_on_closed_order_when_best_amount(self):
+
+        exchange = ccxtExchangeWrapper.load_from_id("binance") # type: ccxtExchangeWrapper
+        exchange.set_offline_mode("test_data/markets.json", "test_data/tickers.csv")
+
+        order = ThresholdRecoveryOrder("ADA/ETH", "ADA", 1000, "ETH", 0.32485131)
+        om = ActionOrderManager(exchange)
+
+        om.add_order(order)
+
+        # first iteration of order manager - order creation and ticker is good
+        om.data_for_orders = {"tickers": {"ADA/ETH": {"ask": order.best_price, "bid": order.best_price}}}
+        om.proceed_orders()
+
+        self.assertEqual(order.get_active_order().status, "open")
+
+        # 2nd iteration of order manager - order is being filled a little and ticker is good
+        om.data_for_orders = {"tickers": {"ADA/ETH": {"ask": order.best_price, "bid": order.best_price}}}
+        om.proceed_orders()
+        self.assertEqual("best_amount", order.state)
+        self.assertIn("hold", order.order_command)
+
+        # let's force to cancel the active trade order
+        resp = exchange.cancel_order(order.active_trade_order)
+        order.active_trade_order.update_order_from_exchange_resp(resp)
+
+        om.data_for_orders = {"tickers": {"ADA/ETH": {"ask": order.best_price, "bid": order.best_price*(1-0.25)}}}
+        om.proceed_orders()
+
+        self.assertIn("new", order.order_command)
+        self.assertIn("market_price", order.state)
 
     def test_2nd_order_executed_better(self):
         pass

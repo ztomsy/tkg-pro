@@ -121,7 +121,8 @@ class ThresholdRecoveryOrder(RecoveryOrder):
 
         current_state_max_order_updates = self.max_order_updates
 
-        if self.state == "best_amount":
+        if self.state == "best_amount" and self.active_trade_order.status == "open":
+
             current_state_max_order_updates = self.max_best_amount_orders_updates
             self.order_command = "hold tickers {symbol}".format(symbol=self.symbol)
 
