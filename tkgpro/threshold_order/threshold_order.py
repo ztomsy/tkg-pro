@@ -136,7 +136,8 @@ class ThresholdRecoveryOrder(RecoveryOrder):
 
                     if price_diff is not None and price_diff <= self.taker_price_threshold:
                         self.order_command = "cancel tickers {symbol}".format(symbol=self.active_trade_order.symbol)
-                        self.tags.append("#below_threshold")
+                        if "#below_threshold" not in self.tags:
+                            self.tags.append("#below_threshold")
 
                         return self.order_command
 
