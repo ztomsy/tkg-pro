@@ -95,10 +95,12 @@ class ThresholdRecoveryOrder(RecoveryOrder):
 
     def _init_best_amount(self):
         price = self._get_recovery_price_for_best_dest_amount()
-        self.active_trade_order = self._create_recovery_order(price)
+
         self.status = "open"
         self.state = "best_amount"
         self.best_price = price
+
+        self.active_trade_order = self._create_recovery_order(price, self.state)
         self.order_command = "new tickers {}".format(self.symbol)  # will start requesting the tickers from the creation
 
     def update_from_exchange(self, resp, market_data=None):
@@ -175,7 +177,7 @@ class ThresholdRecoveryOrder(RecoveryOrder):
                 new_price = core.get_symbol_order_price_from_tickers(self.start_currency, self.dest_currency,
                                                                      {self.symbol: ticker})["price"]
 
-                self.active_trade_order = self._create_recovery_order(new_price)
+                self.active_trade_order = self._create_recovery_order(new_price, self.state)
                 self.order_command = "new"
             else:
                 # if we did not received ticker - so just re request the ticker

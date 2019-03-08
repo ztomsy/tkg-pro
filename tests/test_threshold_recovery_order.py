@@ -42,7 +42,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
 
     def test_create_trade_order(self):
         rm = ThresholdRecoveryOrder("ADA/ETH", "ADA", 1000, "ETH", 0.32485131)
-        order = rm._create_recovery_order(rm._get_recovery_price_for_best_dest_amount())
+        order = rm._create_recovery_order(rm._get_recovery_price_for_best_dest_amount(), "best_amount")
 
         # check if we have a command for getting tickers data after order creation
         self.assertEqual(rm.order_command, "new tickers ADA/ETH")
@@ -50,6 +50,8 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(order.dest_currency, "ETH")
         self.assertEqual(order.amount, 1000)
         self.assertEqual(order.side, "sell")
+
+        self.assertEqual(order.supplementary_data["parent_action_order"]["state"], "best_amount")
 
         self.assertEqual(rm.amount, 1000)
 
@@ -68,6 +70,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(ro.state, "best_amount")
         self.assertEqual(ro.order_command, "hold tickers ADA/ETH")
         self.assertEqual(ro.filled_price, ro.active_trade_order.price)
+        self.assertEqual(ro.active_trade_order.supplementary_data["parent_action_order"]["state"], "best_amount")
 
         # update with marker_data
         market_data = [{"ask": 0.00032487, "bid": 0.00032483}]
@@ -79,6 +82,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(ro.filled, 500)
         self.assertEqual(ro.status, "open")
         self.assertEqual(ro.state, "best_amount")
+        self.assertEqual(ro.active_trade_order.supplementary_data["parent_action_order"]["state"], "best_amount")
         self.assertEqual(ro.order_command, "hold tickers ADA/ETH")
         self.assertEqual(ro.filled_price, ro.active_trade_order.price)
 
@@ -93,6 +97,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(ro.filled, 500)
         self.assertEqual(ro.status, "open")
         self.assertEqual(ro.state, "best_amount")
+        self.assertEqual(ro.active_trade_order.supplementary_data["parent_action_order"]["state"], "best_amount")
         self.assertEqual(ro.order_command, "hold tickers ADA/ETH")
         self.assertEqual(ro.filled_price, ro.active_trade_order.price)
 
@@ -163,9 +168,6 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual("hold tickers ADA/ETH", ro.order_command)
         self.assertNotIn("#below_threshold", ro.tags)
 
-
-
-
     def test_fill_market_price_from_1st_order(self):
 
         ro = ThresholdRecoveryOrder("ADA/ETH", "ADA", 1000, "ETH", 0.32485131, taker_price_threshold=-0.01)
@@ -180,6 +182,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
             self.assertEqual(ro.filled, 500)
             self.assertEqual(ro.status, "open")
             self.assertEqual(ro.state, "best_amount")
+            self.assertEqual(ro.active_trade_order.supplementary_data["parent_action_order"]["state"], "best_amount")
             self.assertEqual(ro.order_command, "hold tickers ADA/ETH")
             self.assertAlmostEqual(ro._prev_price_diff, -0.009, 8)
 
@@ -206,6 +209,7 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         ro.update_from_exchange({"status": "open", "filled": 100})
         self.assertEqual(ro.filled, 600)
         self.assertEqual(ro.state, "market_price")
+        self.assertEqual(ro.active_trade_order.supplementary_data["parent_action_order"]["state"], "market_price")
         self.assertEqual(ro.status, "open")
         self.assertEqual(ro.active_trade_order.status, "open")
         self.assertEqual(ro.active_trade_order.filled, 100)
@@ -221,6 +225,9 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(ro.filled, 1000)
         self.assertEqual(ro.status, "closed")
         self.assertEqual(ro.state, "market_price")
+        self.assertEqual(ro.orders_history[1].supplementary_data["parent_action_order"]["state"], "market_price")
+        self.assertEqual(ro.orders_history[0].supplementary_data["parent_action_order"]["state"], "best_amount")
+
         self.assertEqual(ro.order_command, "")
         self.assertEqual(2, len(ro.orders_history))
 
@@ -240,6 +247,8 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         ro.update_from_exchange({"status": "canceled", "filled": 500}, [{"ask": 2, "bid": 0.00032483}])
         self.assertEqual(ro.order_command, "new")
         self.assertEqual(ro.active_trade_order.price, 0.00032483)  # if taker price
+
+        self.assertEqual(ro.orders_history[0].supplementary_data["parent_action_order"]["state"], "best_amount")
 
         for i in range(1, 5):  # i  will be from 1 to 4 - 4 orders in total
             ro.update_from_exchange({"status": "open", "filled": 0}, [{"ask": 1, "bid": 0.00032483}])
@@ -262,6 +271,9 @@ class ThresholdThresholdRecoverOrderTestSuite(unittest.TestCase):
         self.assertEqual(ro.filled, 1000)
 
         self.assertEqual(6, len(ro.orders_history))
+
+        for i in range(1, 6):
+            self.assertEqual("market_price", ro.orders_history[i].supplementary_data["parent_action_order"]["state"])
 
     def test_close_on_closed_order_when_best_amount(self):
 
