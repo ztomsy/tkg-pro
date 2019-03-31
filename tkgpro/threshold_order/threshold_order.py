@@ -42,56 +42,62 @@ class ThresholdRecoveryOrder(RecoveryOrder):
         :param max_order_updates:  max order updates for market price trade orders
 
         """
-        self.id = str(uuid.uuid4())
-        self.timestamp = time.time()  # timestamp of object creation
-        self.timestamp_close = float()
-
-        self.symbol = symbol
-        self.start_currency = start_currency
-        self.start_amount = start_amount
-        self.dest_currency = dest_currency
-        self.fee = fee
-        self.cancel_threshold = cancel_threshold  #
-        self.best_dest_amount = dest_amount
-        self.best_price = 0.0
-        self.price = 0.0
         self.taker_price_threshold = taker_price_threshold
-
-        self.status = "new"  # new, open, closed
-        self.state = "best_amount"  # "market_price" for reporting purposes
-
-        self.filled_dest_amount = 0.0
-        self.filled_start_amount = 0.0
-        self.filled_price = 0.0
-
-        self.filled = 0.0  # filled amount of base currency
-        self.amount = 0.0  # total expected amount of to be filled base currency
-
-        self.max_best_amount_orders_updates = max_best_amount_order_updates  # max order updates for best amount
-        self.max_order_updates = max_order_updates  # max amount of order updates for market price orders
-
-        self.order_command = None  # None, new, cancel
-
-        if symbol is not None:
-            self.side = core.get_trade_direction_to_currency(symbol, self.dest_currency)
-            if self.side == "buy":
-                self.amount = self.best_dest_amount
-            else:
-                self.amount = self.start_amount
-
-        self.active_trade_order = None  # .. TradeOrder
-        self.orders_history = list()
-
         self.tags = list()
-        self.market_data = dict()  # market data dict: {symbol : {price :{"buy": <ask_price>, "sell": <sell_price>}}
 
-        self._prev_filled_dest_amount = 0.0   # filled amounts on previous orders
-        self._prev_filled_start_amount = 0.0  # filled amountsbot, on previous orders
-        self._prev_filled = 0.0               # filled amounts on previous orders
+        super().__init__(symbol, start_currency, start_amount, dest_currency, dest_amount, fee, cancel_threshold,
+                         max_best_amount_order_updates)
 
-        self._prev_price_diff = 0.0
+        # self.id = str(uuid.uuid4())
+        # self.timestamp = time.time()  # timestamp of object creation
+        # self.timestamp_close = float()
+        #
+        # self.symbol = symbol
+        # self.start_currency = start_currency
+        # self.start_amount = start_amount
+        # self.dest_currency = dest_currency
+        # self.fee = fee
+        # self.cancel_threshold = cancel_threshold  #
+        # self.best_dest_amount = dest_amount
+        # self.best_price = 0.0
+        # self.price = 0.0
 
-        self._init_best_amount()
+
+        # self.status = "new"  # new, open, closed
+        # self.state = "best_amount"  # "market_price" for reporting purposes
+        #
+        # self.filled_dest_amount = 0.0
+        # self.filled_start_amount = 0.0
+        # self.filled_price = 0.0
+        #
+        # self.filled = 0.0  # filled amount of base currency
+        # self.amount = 0.0  # total expected amount of to be filled base currency
+        #
+        # self.max_best_amount_orders_updates = max_best_amount_order_updates  # max order updates for best amount
+        # self.max_order_updates = max_order_updates  # max amount of order updates for market price orders
+        #
+        # self.order_command = None  # None, new, cancel
+        #
+        # if symbol is not None:
+        #     self.side = core.get_trade_direction_to_currency(symbol, self.dest_currency)
+        #     if self.side == "buy":
+        #         self.amount = self.best_dest_amount
+        #     else:
+        #         self.amount = self.start_amount
+        #
+        # self.active_trade_order = None  # .. TradeOrder
+        # self.orders_history = list()
+        #
+        # self.tags = list()
+        # self.market_data = dict()  # market data dict: {symbol : {price :{"buy": <ask_price>, "sell": <sell_price>}}
+        #
+        # self._prev_filled_dest_amount = 0.0   # filled amounts on previous orders
+        # self._prev_filled_start_amount = 0.0  # filled amountsbot, on previous orders
+        # self._prev_filled = 0.0               # filled amounts on previous orders
+        #
+        # self._prev_price_diff = 0.0
+        #
+        # self._init_best_amount()
 
     def _init_best_amount(self):
         price = self._get_recovery_price_for_best_dest_amount()
