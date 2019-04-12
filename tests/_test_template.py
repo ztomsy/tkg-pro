@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .context import tkgcore
+from .context import tkgpro
 import unittest
 
 
