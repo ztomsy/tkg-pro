@@ -96,7 +96,6 @@ class MakerStopLossOrder(ActionOrder):
 
     def _on_open_order(self, active_trade_order: TradeOrder, market_data=None):
 
-        # cancel if have reached the maximum number of updates
         order_command = "hold"
 
         # maker state
@@ -126,7 +125,8 @@ class MakerStopLossOrder(ActionOrder):
 
                 # check taker price
                 if current_taker_price > 0:
-                    relative_price_diff = core.relative_target_price_difference(self.side, self.price, current_taker_price)
+                    relative_price_diff = core.relative_target_price_difference(self.side, self.price,
+                                                                                current_taker_price)
 
                     if relative_price_diff is not None and relative_price_diff <= self.taker_price_threshold:
                         order_command = "cancel"
@@ -152,3 +152,36 @@ class MakerStopLossOrder(ActionOrder):
                 order_command = "hold tickers {symbol}".format(symbol=self.symbol)
 
         return order_command
+
+    def _on_closed_order(self, active_trade_order: TradeOrder, market_data=None):
+
+        self.order_command = "hold tickers {symbol}".format(symbol=self.active_trade_order.symbol)
+
+        if self.filled_start_amount >= self.start_amount * 0.99999:  # close order if filled amount is OK
+            self.order_command = ""
+            self._close_active_order()
+            self.close_order()
+            return self.order_command
+
+        # check if we have new prioe in market data
+        if market_data is None:
+            return self.order_command
+
+        ticker_info = core.get_symbol_order_price_from_tickers(self.start_currency,
+                                                               self.dest_currency,
+                                                               {self.symbol: market_data[0]})
+        current_taker_price = ticker_info["price"]
+        current_maker_price = ticker_info["maker_price"]
+
+        if self.state == "maker":
+            self.active_trade_order = self._create_next_trade_order_for_remained_amount(current_maker_price)
+            self.order_command = "new"
+            return self.order_command
+
+        if self.state == "taker":
+            self.active_trade_order = self._create_next_trade_order_for_remained_amount(current_taker_price)
+            self.order_command = "new"
+            return self.order_command
+
+        return self.order_command
+
