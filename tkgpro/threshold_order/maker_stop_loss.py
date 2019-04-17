@@ -13,7 +13,7 @@ class MakerStopLossOrder(ActionOrder):
 
     def __init__(self,  symbol, amount: float, price: float, side: str,
                  cancel_threshold: float = 0.000001,
-                 maker_price_threshold: float = 0.005,
+                 maker_price_threshold: float = -0.005,
                  maker_order_max_updates: int = 50,
                  force_taker_updates: int = 500,
                  taker_price_threshold: float = -0.01,
@@ -55,7 +55,7 @@ class MakerStopLossOrder(ActionOrder):
     @classmethod
     def create_from_start_amount(cls, symbol, start_currency, start_amount, dest_currency, target_amount,
                                  cancel_threshold: float = 0.000001,
-                                 maker_price_threshold: float = 0.005,
+                                 maker_price_threshold: float = -0.005,
                                  maker_order_max_updates: int = 50,
                                  force_taker_updates: int = 500,
                                  taker_price_threshold: float = -0.01,
