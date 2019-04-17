@@ -287,15 +287,81 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
         self.assertEqual("taker", order.state)
         self.assertEqual(1, len(order.orders_history))
 
-
     def test_maker_threshold_triggered(self):
-        pass
+        ex = ccxtExchangeWrapper.load_from_id("binancae")  # type: ccxtExchangeWrapper
+        ex.set_offline_mode("test_data/markets.json", "test_data/tickers_maker.csv")
 
-    def test_single_taker_is_good(self):
-        pass
+        om = ActionOrderManager(ex)
+        om.offline_order_updates = 10  # number of updates to fill order from offline data
 
-    def test_multi_taker_fill_is_good(self):
-        pass
+        order = MakerStopLossOrder.create_from_start_amount(
+            symbol="BTC/USDT",
+            start_currency="BTC",
+            start_amount=1,
+            dest_currency="USDT",
+            target_amount=1,
+            cancel_threshold=0.001,
+            maker_price_threshold=-0.01,
+            maker_order_max_updates=4,
+            force_taker_updates=50,
+            taker_price_threshold=-0.02,
+            taker_order_max_updates=5,
+            threshold_check_after_updates=6
+        )
+
+        om.add_order(order)
+
+        market_data = {"tickers": {"BTC/USDT": {"ask": 1, "bid": 0.99}}}
+        om.data_for_orders.update(market_data)
+        om.proceed_orders()
+
+        market_data = {"tickers": {"BTC/USDT": {"ask": 1, "bid": 0.99}}}
+        om.data_for_orders.update(market_data)
+        om.proceed_orders()
+
+        self.assertEqual("maker", order.state)
+
+        # let's trigger taker threshold - bid price
+        market_data = {"tickers": {"BTC/USDT": {"ask": 1, "bid": 0.97}}}
+        om.data_for_orders.update(market_data)
+        om.proceed_orders()
+
+        self.assertEqual(0.2, order.filled)
+        self.assertEqual("taker", order.state)
+        self.assertEqual("cancel tickers BTC/USDT", order.order_command)
+        self.assertIn("#below_threshold_taker_price", order.tags)
+
+        # let's trigger taker threshold - bid price
+        market_data = {"tickers": {"BTC/USDT": {"ask": 1, "bid": 0.97}}}
+        om.data_for_orders.update(market_data)
+        om.proceed_orders()
+
+        self.assertEqual("taker", order.state)
+        self.assertEqual("new tickers BTC/USDT", order.order_command)
+        self.assertEqual(1, len(order.orders_history))
+        self.assertEqual(0.97, order.active_trade_order.price)
+
+        first_order_id = order.get_active_order().internal_id
+        price = 0.96
+        while om.have_open_orders():
+            market_data = {"tickers": {"BTC/USDT": {"ask": 1, "bid": 0.96}}}
+            om.data_for_orders.update(market_data)
+            om.proceed_orders()
+
+            if om.get_closed_orders():
+                price = price * 0.99
+
+            if order.active_trade_order is not None and order.active_trade_order.internal_id not in ("", first_order_id):
+                self.assertEqual(price, order.active_trade_order.price)
+
+            self.assertEqual("taker", order.state)
+
+
+        self.assertEqual(1, order.filled)
+        self.assertEqual(15, len(order.orders_history))
+        self.assertEqual(1, sum(o.filled for o in order.orders_history))
+
+
 
     def test_force_taker(self):
         """

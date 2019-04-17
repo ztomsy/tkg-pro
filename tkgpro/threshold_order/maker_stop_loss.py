@@ -109,36 +109,6 @@ class MakerStopLossOrder(ActionOrder):
     def _on_open_order(self, active_trade_order: TradeOrder, market_data=None):
 
         order_command = "hold tickers {symbol}".format(symbol=self.symbol)
-        current_taker_price, current_maker_price = 0, 0
-        # for "maker" and "taker" states
-        # than if market data is present - let's check if it's below or above the thresholds
-        # current_taker_price, current_taker_price = 0, 0
-
-        # if there is no market data - just return default command
-        if market_data is not None:
-            try:
-                ticker_info = core.get_symbol_order_price_from_tickers(self.start_currency,
-                                                                       self.dest_currency,
-                                                                       {self.symbol: market_data[0]})
-                current_taker_price = ticker_info["price"]
-                current_maker_price = ticker_info["maker_price"]
-
-            except Exception as e:
-                order_command = "hold tickers {symbol}".format(symbol=self.symbol)
-                return order_command
-
-        # check taker price for both states
-        if current_taker_price > 0:
-            relative_price_diff = core.relative_target_price_difference(self.side, self.price,
-                                                                        current_taker_price)
-
-            if relative_price_diff is not None and relative_price_diff <= self.taker_price_threshold:
-                order_command = "cancel tickers {symbol}".format(symbol=self.symbol)
-                self.status = "taker"
-
-                if "#below_threshold_taker" not in self.tags:
-                    self.tags.append("#below_threshold_taker_price")
-                return order_command
 
         # maker state
         if self.state == "maker":
@@ -162,6 +132,37 @@ class MakerStopLossOrder(ActionOrder):
                 return "cancel tickers {symbol}".format(symbol=self.symbol)
 
             order_command = "hold tickers {symbol}".format(symbol=self.symbol)
+
+            current_taker_price, current_maker_price = 0, 0
+
+            # let's check if taker price below the thresholds
+            # current_taker_price, current_taker_price = 0, 0
+
+            # if there is no market data - just return default command
+            if market_data is not None:
+                try:
+                    ticker_info = core.get_symbol_order_price_from_tickers(self.start_currency,
+                                                                           self.dest_currency,
+                                                                           {self.symbol: market_data[0]})
+                    current_taker_price = ticker_info["price"]
+                    current_maker_price = ticker_info["maker_price"]
+
+                except Exception as e:
+                    order_command = "hold tickers {symbol}".format(symbol=self.symbol)
+                    return order_command
+
+            # check taker price for both states
+            if current_taker_price > 0:
+                relative_price_diff = core.relative_target_price_difference(self.side, self.price,
+                                                                            current_taker_price)
+
+                if relative_price_diff is not None and relative_price_diff <= self.taker_price_threshold:
+                    order_command = "cancel tickers {symbol}".format(symbol=self.symbol)
+                    self.state = "taker"
+
+                    if "#below_threshold_taker" not in self.tags:
+                        self.tags.append("#below_threshold_taker_price")
+                    return order_command
 
             # check maker price
             if current_maker_price > 0:
