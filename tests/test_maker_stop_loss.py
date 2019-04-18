@@ -156,6 +156,8 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
         om.proceed_orders()  # update 1: order fill 1/10 from 1 (0.1)
 
         self.assertEqual("maker", order.state)
+        self.assertEqual("open", order.status)
+
         self.assertEqual("hold tickers BTC/USDT", order.order_command)
 
         # maker price (ask) below threshold
@@ -165,6 +167,8 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
         om.proceed_orders()  # update 2: order fill 2/10 from 1 (0.)
 
         self.assertEqual(order.state, "maker")
+        self.assertEqual("open", order.status)
+
         self.assertEqual("cancel tickers BTC/USDT", order.order_command)
         self.assertIn("#below_threshold_maker", order.tags)
         self.assertEqual(0.2, order.filled)
@@ -174,9 +178,11 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
         om.data_for_orders.update(market_data)
         om.proceed_orders()
 
-        self.assertEqual(0.999, order.price)
+        self.assertEqual(0.999, order.active_trade_order.price)
         self.assertEqual(0.2, order.orders_history[-1].filled)
         self.assertEqual(order.state, "maker")
+        self.assertEqual("open", order.status)
+
         self.assertEqual("new tickers BTC/USDT", order.order_command)
         self.assertEqual(0.2, order.filled)
 
@@ -269,6 +275,8 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
 
         self.assertIn("#force_taker_max_maker_updates", order.tags)
         self.assertEqual("taker", order.state)
+        self.assertEqual("open", order.status)
+
         self.assertEqual("cancel tickers BTC/USDT", order.order_command)
 
         market_data = {"tickers": {"BTC/USDT": {"ask": 1, "bid": 0.99}}}
@@ -278,6 +286,7 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
         self.assertEqual("new tickers BTC/USDT", order.order_command)
         self.assertEqual(0.99, order.active_trade_order.price)
         self.assertEqual("taker", order.state)
+        self.assertEqual("open", order.status)
 
         market_data = {"tickers": {"BTC/USDT": {"ask": 1, "bid": 0.99}}}
         om.data_for_orders.update(market_data)
@@ -285,6 +294,8 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
 
         self.assertEqual(0.99, order.active_trade_order.price)
         self.assertEqual("taker", order.state)
+        self.assertEqual("open", order.status)
+
         self.assertEqual(1, len(order.orders_history))
 
     def test_maker_threshold_triggered(self):
@@ -320,6 +331,7 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
         om.proceed_orders()
 
         self.assertEqual("maker", order.state)
+        self.assertEqual("open", order.status)
 
         # let's trigger taker threshold - bid price
         market_data = {"tickers": {"BTC/USDT": {"ask": 1, "bid": 0.97}}}
@@ -328,6 +340,8 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
 
         self.assertEqual(0.2, order.filled)
         self.assertEqual("taker", order.state)
+        self.assertEqual("open", order.status)
+
         self.assertEqual("cancel tickers BTC/USDT", order.order_command)
         self.assertIn("#below_threshold_taker_price", order.tags)
 
@@ -337,6 +351,8 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
         om.proceed_orders()
 
         self.assertEqual("taker", order.state)
+        self.assertEqual("open", order.status)
+
         self.assertEqual("new tickers BTC/USDT", order.order_command)
         self.assertEqual(1, len(order.orders_history))
         self.assertEqual(0.97, order.active_trade_order.price)
@@ -357,6 +373,7 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
             self.assertEqual("taker", order.state)
 
 
+        self.assertEqual("closed", order.status)
         self.assertEqual(1, order.filled)
         self.assertEqual(15, len(order.orders_history))
         self.assertEqual(1, sum(o.filled for o in order.orders_history))

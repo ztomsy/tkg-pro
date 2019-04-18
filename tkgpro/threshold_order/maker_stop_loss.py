@@ -171,7 +171,7 @@ class MakerStopLossOrder(ActionOrder):
 
                 if relative_price_diff is not None and relative_price_diff <= self.maker_price_threshold:
                     order_command = "cancel tickers {symbol}".format(symbol=self.active_trade_order.symbol)
-                    self.status = "maker"
+                    self.state = "maker"
 
                     if "#below_threshold_maker" not in self.tags:
                         self.tags.append("#below_threshold_maker")
