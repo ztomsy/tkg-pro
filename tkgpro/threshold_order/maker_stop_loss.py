@@ -153,7 +153,7 @@ class MakerStopLossOrder(ActionOrder):
 
             # check taker price for both states
             if current_taker_price > 0:
-                relative_price_diff = core.relative_target_price_difference(self.side, self.price,
+                relative_price_diff = core.relative_target_price_difference(self.side, self.active_trade_order.price,
                                                                             current_taker_price)
 
                 if relative_price_diff is not None and relative_price_diff <= self.taker_price_threshold:
@@ -166,7 +166,7 @@ class MakerStopLossOrder(ActionOrder):
 
             # check maker price
             if current_maker_price > 0:
-                relative_price_diff = core.relative_target_price_difference(self.side, self.price,
+                relative_price_diff = core.relative_target_price_difference(self.side, self.active_trade_order.price,
                                                                             current_maker_price)
 
                 if relative_price_diff is not None and relative_price_diff <= self.maker_price_threshold:
