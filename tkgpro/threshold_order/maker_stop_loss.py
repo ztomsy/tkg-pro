@@ -190,12 +190,11 @@ class MakerStopLossOrder(ActionOrder):
 
     def _on_closed_order(self, active_trade_order: TradeOrder, market_data=None):
 
-        self._close_active_order()
-
         self.order_command = "hold tickers {symbol}".format(symbol=self.symbol)
 
-        if self.filled_start_amount >= self.start_amount * 0.99999:  # close order if filled amount is OK
+        if self.filled_start_amount >= self.start_amount * 0.999:  # close order if filled amount is OK
             self.order_command = ""
+            self._close_active_order()
             self.close_order()  # we just need to close ActionOrder, the trade order was closed above
             return self.order_command
 
@@ -210,11 +209,13 @@ class MakerStopLossOrder(ActionOrder):
         current_maker_price = ticker_info["maker_price"]
 
         if self.state == "maker":
+            self._close_active_order()
             self.active_trade_order = self._create_next_trade_order_for_remained_amount(current_maker_price)
             self.order_command = "new tickers {symbol}".format(symbol=self.symbol)
             return self.order_command
 
         if self.state == "taker":
+            self._close_active_order()
             self.active_trade_order = self._create_next_trade_order_for_remained_amount(current_taker_price)
             self.order_command = "new tickers {symbol}".format(symbol=self.symbol)
             return self.order_command

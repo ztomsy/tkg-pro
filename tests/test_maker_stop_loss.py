@@ -378,7 +378,43 @@ class MakerStopLossOrderTestSuite(unittest.TestCase):
         self.assertEqual(15, len(order.orders_history))
         self.assertEqual(1, sum(o.filled for o in order.orders_history))
 
+    def test_close_on_creation(self):
+        ex = ccxtExchangeWrapper.load_from_id("binancae")  # type: ccxtExchangeWrapper
+        ex.set_offline_mode("test_data/markets.json", "test_data/tickers_maker.csv")
 
+        om = ActionOrderManager(ex)
+        om.offline_order_updates = 1  # number of updates to fill order from offline data
+
+        order = MakerStopLossOrder.create_from_start_amount(
+            symbol="BTC/USDT",
+            start_currency="BTC",
+            start_amount=1,
+            dest_currency="USDT",
+            target_amount=1,
+            cancel_threshold=0.001,
+            maker_price_threshold=-0.01,
+            maker_order_max_updates=4,
+            force_taker_updates=50,
+            taker_price_threshold=-0.02,
+            taker_order_max_updates=5,
+            threshold_check_after_updates=6
+        )
+
+        ex.add_offline_order_data(order.active_trade_order, 1)
+
+        ex._offline_orders_data[order.active_trade_order.internal_id]["_offline_order"]["create"]["status"] = "closed"
+        ex._offline_orders_data[order.active_trade_order.internal_id]["_offline_order"]["create"]["filled"] = 0.999
+        om.add_order(order)
+
+        om.proceed_orders()
+
+        closed_orders = om.get_closed_orders()
+
+        self.assertEqual("closed", order.status)
+        self.assertEqual(1, len(closed_orders))
+        # om.proceed_orders()
+        #
+        # self.assertEqual()
 
     def test_force_taker(self):
         """
