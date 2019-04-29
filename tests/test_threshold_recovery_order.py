@@ -1,7 +1,7 @@
 from .context import *
 import tkgpro
 from tkgpro import ThresholdRecoveryOrder
-from tkgcore import ActionOrderManager, ccxtExchangeWrapper
+from ztom import ActionOrderManager, ccxtExchangeWrapper
 
 import unittest
 import copy

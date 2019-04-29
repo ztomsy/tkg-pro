@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from .context import tkgpro
 from tkgpro import MakerStopLossOrder
-from tkgcore import core, ccxtExchangeWrapper, ActionOrderManager
+from ztom import core, ccxtExchangeWrapper, ActionOrderManager
 
 import unittest
 

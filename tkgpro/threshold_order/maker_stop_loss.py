@@ -1,6 +1,6 @@
-from tkgcore.trade_orders import TradeOrder
-from tkgcore.action_order import ActionOrder
-from tkgcore import core
+from ztom.trade_orders import TradeOrder
+from ztom.action_order import ActionOrder
+from ztom import core
 
 
 class MakerStopLossOrder(ActionOrder):
