@@ -108,15 +108,13 @@ class MakerStopLossOrder(ActionOrder):
 
     def _on_open_order(self, active_trade_order: TradeOrder, market_data=None):
 
+        # let's start requesting the tickers
         order_command = "hold tickers {symbol}".format(symbol=self.symbol)
 
         # maker state
         if self.state == "maker":
 
             self._total_maker_updates += 1
-
-            # let's start requesting the tickers
-            order_command = "hold tickers {symbol}".format(symbol=self.symbol)
 
             # cancel if reach force_taker_updates
             if self._total_maker_updates >= self.force_taker_updates \
@@ -126,7 +124,7 @@ class MakerStopLossOrder(ActionOrder):
                 self.state = "taker"
                 return "cancel tickers {symbol}".format(symbol=self.symbol)
 
-            # check if need to re-open maker order becaus of reaching single  maker order updates limit
+            # check if need to re-open maker order because of reaching single  maker order updates limit
             if active_trade_order.update_requests_count >= self.maker_order_max_updates \
                     and active_trade_order.amount - active_trade_order.filled > self.cancel_threshold:
                 return "cancel tickers {symbol}".format(symbol=self.symbol)
