@@ -1,12 +1,12 @@
-import tkgcore
-from tkgcore import core
-from tkgcore import errors
-from tkgcore import TradeOrder
-from tkgcore import ActionOrder
-from tkgcore import RecoveryOrder
+import ztom
+from ztom import core
+from ztom import errors
+from ztom import TradeOrder
+from ztom import ActionOrder
+from ztom import RecoveryOrder
 import time
 import uuid
-from tkgcore import ccxtExchangeWrapper
+from ztom import ccxtExchangeWrapper
 
 
 class ThresholdRecoveryOrder(RecoveryOrder):
