@@ -1,28 +1,21 @@
-::
 
- TTTTTTTTTT    K    K     GGGGG
-     T         K   K     G
-     T         KKKK      G
-     T         K  K      G    GG
-     T         K   K     G      G
-     t         K    K     GGGGGGG
 
-  ============ PRO =============
-
-TKG-PRO is a Python3 package for Algo and HF Trading on crypto exchanges based on ccxt and tkg-core python libraries.
+TKG-PRO is a Python3 package for Algo and HF Trading on crypto exchanges based on ccxt and ztom python libraries.
 
 Features:
 
-- thresholded recovery order
+- ThresholdRecoveryOrder: 
+  is aimed to be filled for the setted dest amount and if fails fills on best market price. If the price will drop (or raise) belowe the threshold - order will be filled via taker market price.     
+  
+- MakerStopLossOrder:
+  Start with maker for best amount. Than if price drops above threshold try - recreate order for maker if taker price drops above threshold - than set the taker order. 
 
 Installation
 =============
 
-cd tkg-pro
-python3 -m pip install --upgrade pip
+
 python3 -m pip install -r requirements.txt 
 python3 -m pip install -e .
-
 
 Running the tests: python3 -m unittest -v -b
 
